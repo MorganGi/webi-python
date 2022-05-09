@@ -18,8 +18,6 @@ def get_id(phone,mydb):
     s = "|"
     extract = "title{0}firstname{0}lastname{0}displayname{0}society{0}phone{0}email{0}id\n".format(s)
     
-    # print(phone)
-
     mycursor = mydb.cursor()
     mycursor.execute("SELECT  firstname,realname,name,phone, phone2, mobile, entities_id FROM glpi_users where phone LIKE '%{}';".format(phone))
     myresult = mycursor.fetchall()
@@ -31,7 +29,6 @@ def get_id(phone,mydb):
         if len(myresult) == 0 :
             mycursor.execute("SELECT  firstname,realname,name,phone, phone2, mobile, entities_id FROM glpi_users where phone2 LIKE '%{}';".format(phone))
             myresult = mycursor.fetchall()
-    #########
 
     try: 
 
@@ -50,31 +47,26 @@ def get_id(phone,mydb):
         if myresult[0][3]:
             tel = myresult[0][3]
             tel = tel[-9:]
-            # print("TEL:", tel)
         elif myresult[0][4] != '':
             tel = myresult[0][4]
             tel = tel[-9:]
-            # print("TEL:", tel)
         elif myresult[0][5] != '':
             tel = myresult[0][5]
             tel = tel[-9:]
-            # print("TEL:", tel)
         else:
             print("Téléphone non renseigné")
     
-
         extract += "mr{0}{1}{0}{2}{0}{3}{0}{6}{0}0033{4}{0}default@mail.fr{0}{5}\n".format(s,myresult[0][0],myresult[0][1],myresult[0][2],tel,str(myresult[0][6]),society)
     except IndexError as err:
         print("Numéro inconnu et l'erreur:\n ",err)
+
     mycursor.close()
-    mydb.close()
     return extract      
     
 def get_name(search,mydb):
    
     s = "|"
     extract = "title{0}firstname{0}lastname{0}displayname{0}society{0}phone{0}email{0}id\n".format(s)
-    # print(search)
 
     mycursor = mydb.cursor()
     mycursor.execute("SELECT  firstname,realname,name,phone, phone2, mobile, entities_id FROM glpi_users where firstname LIKE '%{}';".format(search))
@@ -113,18 +105,15 @@ def get_name(search,mydb):
             print("Téléphone non renseigné")
 
         extract += "mr{0}{1}{0}{2}{0}{3}{0}{6}{0}0033{4}{0}default@mail.fr{0}{5}\n".format(s,myresult[0][0],myresult[0][1],myresult[0][2],tel,str(myresult[0][6]),society)
-        # print(extract)
     
     except IndexError as err:
         return ("Personne Inconnue: \n error : ",err )
     except :
         print("Erreur Search")
     mycursor.close()
-    mydb.close()
     return extract
 
-##################################################################################################
-
+# ROUTES
 
 @app.route('/api/ws-phonebook/all', methods=['GET'])
 def api_glpi_all():
@@ -142,25 +131,21 @@ def api_glpi_annuaire():
         )
     except :
         print("Echec de connexion à la base de données.")
-
-    # time_start = time.time()
     
     if 'phone' in flask.request.args and flask.request.args['phone'] != "unknown" :
         phone = str(flask.request.args['phone'])
-        # print("REQUESTED PHONE",phone)
         phone = phone[-9:] # On garde les 9 derniers digits
-        # print("SEARCHED PHONE : ", phone)
-
         extract = get_id(phone,mydb)
-        # time_end = time.time()
-        # print("Time before return : ", time_end - time_start)
+        mydb.close()
         return extract
 
     elif 'search' in flask.request.args:
         search = str(flask.request.args['search'])
-        return get_name(search,mydb)
+        extract = get_name(search,mydb)
+        mydb.close()
+        return extract
     else:
-        print("Error_Field : ", flask.request.args['phone'])
-        return flask.request.args['phone']
+        mydb.close()
+        return "pas d'arguments passés"
 
 app.run(host="0.0.0.0")
