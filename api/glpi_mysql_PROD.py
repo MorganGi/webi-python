@@ -12,18 +12,8 @@ PWD = "superpass"
 DATABASE = "dbglpi"
 TABLE_USERS = "glpi_users"
 
-try :
 
-    mydb = mysql.connector.connect(
-        host=HOST,
-        user=USER,
-        password=PWD,
-        database= DATABASE
-        )
-except :
-    print("Echec de connexion à la base de données.")
-
-def get_id(phone):
+def get_id(phone,mydb):
 
     s = "|"
     extract = "title{0}firstname{0}lastname{0}displayname{0}society{0}phone{0}email{0}id\n".format(s)
@@ -57,7 +47,6 @@ def get_id(phone):
 
 
     try:
-
         if myresult[0][3]:
             tel = myresult[0][3]
             tel = tel[-9:]
@@ -77,14 +66,14 @@ def get_id(phone):
         extract += "mr{0}{1}{0}{2}{0}{3}{0}{6}{0}0033{4}{0}default@mail.fr{0}{5}\n".format(s,myresult[0][0],myresult[0][1],myresult[0][2],tel,str(myresult[0][6]),society)
     except IndexError as err:
         print("Numéro inconnu et l'erreur:\n ",err)
-
+    mycursor.close()
+    mydb.close()
     return extract      
     
-def get_name(search):
+def get_name(search,mydb):
    
     s = "|"
     extract = "title{0}firstname{0}lastname{0}displayname{0}society{0}phone{0}email{0}id\n".format(s)
-
     # print(search)
 
     mycursor = mydb.cursor()
@@ -130,7 +119,8 @@ def get_name(search):
         return ("Personne Inconnue: \n error : ",err )
     except :
         print("Erreur Search")
-    
+    mycursor.close()
+    mydb.close()
     return extract
 
 ##################################################################################################
@@ -143,7 +133,16 @@ def api_glpi_all():
 
 @app.route('/api/ws-phonebook', methods=['GET'])
 def api_glpi_annuaire():
-    
+    try :
+        mydb = mysql.connector.connect(
+        host=HOST,
+        user=USER,
+        password=PWD,
+        database= DATABASE
+        )
+    except :
+        print("Echec de connexion à la base de données.")
+
     # time_start = time.time()
     
     if 'phone' in flask.request.args and flask.request.args['phone'] != "unknown" :
@@ -152,14 +151,14 @@ def api_glpi_annuaire():
         phone = phone[-9:] # On garde les 9 derniers digits
         # print("SEARCHED PHONE : ", phone)
 
-        extract = get_id(phone)
+        extract = get_id(phone,mydb)
         # time_end = time.time()
         # print("Time before return : ", time_end - time_start)
         return extract
 
     elif 'search' in flask.request.args:
         search = str(flask.request.args['search'])
-        return get_name(search)
+        return get_name(search,mydb)
     else:
         print("Error_Field : ", flask.request.args['phone'])
         return flask.request.args['phone']
