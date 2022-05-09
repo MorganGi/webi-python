@@ -12,19 +12,23 @@ PWD = "superpass"
 DATABASE = "dbglpi"
 TABLE_USERS = "glpi_users"
 
-mydb = mysql.connector.connect(
-    host=HOST,
-    user=USER,
-    password=PWD,
-    database= DATABASE
-    )
+try :
+
+    mydb = mysql.connector.connect(
+        host=HOST,
+        user=USER,
+        password=PWD,
+        database= DATABASE
+        )
+except :
+    print("Echec de connexion à la base de données.")
 
 def get_id(phone):
 
     s = "|"
     extract = "title{0}firstname{0}lastname{0}displayname{0}society{0}phone{0}email{0}id\n".format(s)
     
-    print(phone)
+    # print(phone)
 
     mycursor = mydb.cursor()
     mycursor.execute("SELECT  firstname,realname,name,phone, phone2, mobile, entities_id FROM glpi_users where phone LIKE '%{}';".format(phone))
@@ -37,9 +41,21 @@ def get_id(phone):
         if len(myresult) == 0 :
             mycursor.execute("SELECT  firstname,realname,name,phone, phone2, mobile, entities_id FROM glpi_users where phone2 LIKE '%{}';".format(phone))
             myresult = mycursor.fetchall()
-        
-    
-    # print("SELECT RES : ",myresult)
+    #########
+
+    try: 
+
+        mycursor.execute("SELECT name FROM glpi_entities where id = '{}';".format(myresult[0][6]))
+        getSociety = mycursor.fetchall()
+        print(getSociety)
+        society = getSociety[0][0]
+        print(society)
+
+    except:
+        print("Requête society Erreur")
+        society = "societyNotFound"
+
+
     try:
 
         if myresult[0][3]:
@@ -58,7 +74,7 @@ def get_id(phone):
             print("Téléphone non renseigné")
     
 
-        extract += "mr{0}{1}{0}{2}{0}{3}{0}SOCIETY{0}0033{4}{0}EMAIL@mail.fr{0}{5}\n".format(s,myresult[0][0],myresult[0][1],myresult[0][2],tel,str(myresult[0][6]))
+        extract += "mr{0}{1}{0}{2}{0}{3}{0}{6}{0}0033{4}{0}default@mail.fr{0}{5}\n".format(s,myresult[0][0],myresult[0][1],myresult[0][2],tel,str(myresult[0][6]),society)
     except IndexError as err:
         print("Numéro inconnu et l'erreur:\n ",err)
 
@@ -82,9 +98,19 @@ def get_name(search):
         if len(myresult) == 0 :
             mycursor.execute("SELECT  firstname,realname,name,phone, phone2, mobile, entities_id FROM glpi_users where name LIKE '%{}';".format(search))
             myresult = mycursor.fetchall()
+    
+    try: 
+        mycursor.execute("SELECT name FROM glpi_entities where id = '{}';".format(myresult[0][6]))
+        getSociety = mycursor.fetchall()
+        print(getSociety)
+        society = getSociety[0][0]
+        print(society)
 
+    except:
+        print("Requête society Erreur")
+        society = "societyNotFound"
+    
     try:
-
         if myresult[0][3]:
             tel = myresult[0][3]
             tel = tel[-9:]
@@ -96,11 +122,14 @@ def get_name(search):
             tel = tel[-9:]
         else:
             print("Téléphone non renseigné")
-        extract += "mr{0}{1}{0}{2}{0}{3}{0}SOCIETY{0}0033{4}{0}EMAIL@mail.fr{0}{5}\n".format(s,myresult[0][0],myresult[0][1],myresult[0][2],tel,str(myresult[0][6]))
-        print(extract)
+
+        extract += "mr{0}{1}{0}{2}{0}{3}{0}{6}{0}0033{4}{0}default@mail.fr{0}{5}\n".format(s,myresult[0][0],myresult[0][1],myresult[0][2],tel,str(myresult[0][6]),society)
+        # print(extract)
     
     except IndexError as err:
         return ("Personne Inconnue: \n error : ",err )
+    except :
+        print("Erreur Search")
     
     return extract
 
@@ -115,7 +144,7 @@ def api_glpi_all():
 @app.route('/api/ws-phonebook', methods=['GET'])
 def api_glpi_annuaire():
     
-    time_start = time.time()
+    # time_start = time.time()
     
     if 'phone' in flask.request.args and flask.request.args['phone'] != "unknown" :
         phone = str(flask.request.args['phone'])
@@ -124,8 +153,8 @@ def api_glpi_annuaire():
         # print("SEARCHED PHONE : ", phone)
 
         extract = get_id(phone)
-        time_end = time.time()
-        # print("temps before return : ", time_end - time_start)
+        # time_end = time.time()
+        # print("Time before return : ", time_end - time_start)
         return extract
 
     elif 'search' in flask.request.args:
