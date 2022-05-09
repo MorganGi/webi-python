@@ -129,23 +129,26 @@ def api_glpi_annuaire():
         password=PWD,
         database= DATABASE
         )
+
+        if 'phone' in flask.request.args and flask.request.args['phone'] != "unknown" :
+            phone = str(flask.request.args['phone'])
+            phone = phone[-9:] # On garde les 9 derniers digits
+            extract = get_id(phone,mydb)
+            mydb.close()
+            return extract
+
+        elif 'search' in flask.request.args:
+            search = str(flask.request.args['search'])
+            extract = get_name(search,mydb)
+            mydb.close()
+            return extract
+        else:
+            mydb.close()
+            return "pas d'arguments passés"
+
     except :
         print("Echec de connexion à la base de données.")
     
-    if 'phone' in flask.request.args and flask.request.args['phone'] != "unknown" :
-        phone = str(flask.request.args['phone'])
-        phone = phone[-9:] # On garde les 9 derniers digits
-        extract = get_id(phone,mydb)
-        mydb.close()
-        return extract
-
-    elif 'search' in flask.request.args:
-        search = str(flask.request.args['search'])
-        extract = get_name(search,mydb)
-        mydb.close()
-        return extract
-    else:
-        mydb.close()
-        return "pas d'arguments passés"
+    
 
 app.run(host="0.0.0.0")
