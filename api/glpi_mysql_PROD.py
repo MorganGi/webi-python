@@ -1,4 +1,3 @@
-import time
 import flask
 from flask import Flask
 import mysql.connector
@@ -19,29 +18,16 @@ def get_id(phone,mydb):
     extract = "title{0}firstname{0}lastname{0}displayname{0}society{0}phone{0}email{0}id\n".format(s)
     
     mycursor = mydb.cursor()
-    mycursor.execute("SELECT  firstname,realname,name,phone, phone2, mobile, entities_id FROM glpi_users where phone LIKE '%{}';".format(phone))
+    mycursor.execute("SELECT firstname,realname,glpi_users.name,phone, phone2, mobile, glpi_users.entities_id, glpi_entities.name FROM glpi_users LEFT JOIN glpi_entities ON glpi_users.entities_id = glpi_entities.id WHERE phone LIKE '%{}';".format(phone))
     myresult = mycursor.fetchall()
     
     if len(myresult) == 0 :
-        mycursor.execute("SELECT  firstname,realname,name,phone, phone2, mobile, entities_id FROM {0} where mobile LIKE '%{1}';".format(TABLE_USERS,phone))
+        mycursor.execute("SELECT firstname,realname,glpi_users.name,phone, phone2, mobile, glpi_users.entities_id, glpi_entities.name FROM glpi_users LEFT JOIN glpi_entities ON glpi_users.entities_id = glpi_entities.id WHERE mobile LIKE '%{}';".format(phone))
         myresult = mycursor.fetchall()
 
         if len(myresult) == 0 :
-            mycursor.execute("SELECT  firstname,realname,name,phone, phone2, mobile, entities_id FROM glpi_users where phone2 LIKE '%{}';".format(phone))
+            mycursor.execute("SELECT firstname,realname,glpi_users.name,phone, phone2, mobile, glpi_users.entities_id, glpi_entities.name FROM glpi_users LEFT JOIN glpi_entities ON glpi_users.entities_id = glpi_entities.id WHERE phone2 LIKE '%{}';".format(phone))
             myresult = mycursor.fetchall()
-
-    try: 
-
-        mycursor.execute("SELECT name FROM glpi_entities where id = '{}';".format(myresult[0][6]))
-        getSociety = mycursor.fetchall()
-        print(getSociety)
-        society = getSociety[0][0]
-        print(society)
-
-    except:
-        print("Requête society Erreur")
-        society = "societyNotFound"
-
 
     try:
         if myresult[0][3]:
@@ -56,7 +42,7 @@ def get_id(phone,mydb):
         else:
             print("Téléphone non renseigné")
     
-        extract += "mr{0}{1}{0}{2}{0}{3}{0}{6}{0}0033{4}{0}default@mail.fr{0}{5}\n".format(s,myresult[0][0],myresult[0][1],myresult[0][2],tel,str(myresult[0][6]),society)
+        extract += "mr{0}{1}{0}{2}{0}{3}{0}{6}{0}0033{4}{0}default@mail.fr{0}{5}\n".format(s,myresult[0][0],myresult[0][1],myresult[0][2],tel,str(myresult[0][6]),myresult[0][7])
     except IndexError as err:
         print("Numéro inconnu et l'erreur:\n ",err)
 
@@ -69,28 +55,20 @@ def get_name(search,mydb):
     extract = "title{0}firstname{0}lastname{0}displayname{0}society{0}phone{0}email{0}id\n".format(s)
 
     mycursor = mydb.cursor()
-    mycursor.execute("SELECT  firstname,realname,name,phone, phone2, mobile, entities_id FROM glpi_users where firstname LIKE '%{}';".format(search))
+    mycursor.execute("SELECT firstname,realname,glpi_users.name,phone, phone2, mobile, glpi_users.entities_id, glpi_entities.name FROM glpi_users LEFT JOIN glpi_entities ON glpi_users.entities_id = glpi_entities.id WHERE firstname LIKE '%{}';".format(search))
+    
     myresult = mycursor.fetchall()
     
     if len(myresult) == 0 :
-        mycursor.execute("SELECT  firstname,realname,name,phone, phone2, mobile, entities_id FROM glpi_users where realname LIKE '%{}';".format(search))
+        mycursor.execute("SELECT firstname,realname,glpi_users.name,phone, phone2, mobile, glpi_users.entities_id, glpi_entities.name FROM glpi_users LEFT JOIN glpi_entities ON glpi_users.entities_id = glpi_entities.id WHERE realname LIKE '%{}';".format(search))
+        
         myresult = mycursor.fetchall()
 
         if len(myresult) == 0 :
-            mycursor.execute("SELECT  firstname,realname,name,phone, phone2, mobile, entities_id FROM glpi_users where name LIKE '%{}';".format(search))
+            mycursor.execute("SELECT firstname,realname,glpi_users.name,phone, phone2, mobile, glpi_users.entities_id, glpi_entities.name FROM glpi_users LEFT JOIN glpi_entities ON glpi_users.entities_id = glpi_entities.id WHERE name LIKE '%{}';".format(search))
+            
             myresult = mycursor.fetchall()
-    
-    try: 
-        mycursor.execute("SELECT name FROM glpi_entities where id = '{}';".format(myresult[0][6]))
-        getSociety = mycursor.fetchall()
-        print(getSociety)
-        society = getSociety[0][0]
-        print(society)
 
-    except:
-        print("Requête society Erreur")
-        society = "societyNotFound"
-    
     try:
         if myresult[0][3]:
             tel = myresult[0][3]
@@ -104,12 +82,13 @@ def get_name(search,mydb):
         else:
             print("Téléphone non renseigné")
 
-        extract += "mr{0}{1}{0}{2}{0}{3}{0}{6}{0}0033{4}{0}default@mail.fr{0}{5}\n".format(s,myresult[0][0],myresult[0][1],myresult[0][2],tel,str(myresult[0][6]),society)
+        extract += "mr{0}{1}{0}{2}{0}{3}{0}{6}{0}0033{4}{0}default@mail.fr{0}{5}\n".format(s,myresult[0][0],myresult[0][1],myresult[0][2],tel,str(myresult[0][6]),myresult[0][7])
     
     except IndexError as err:
         return ("Personne Inconnue: \n error : ",err )
     except :
         print("Erreur Search")
+
     mycursor.close()
     return extract
 
@@ -148,7 +127,5 @@ def api_glpi_annuaire():
 
     except :
         print("Echec de connexion à la base de données.")
-    
-    
 
 app.run(host="0.0.0.0")
