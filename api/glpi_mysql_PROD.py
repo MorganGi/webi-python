@@ -11,6 +11,10 @@ PWD = "superpass"
 DATABASE = "dbglpi"
 TABLE_USERS = "glpi_users"
 
+# HOST = "192.168.18.192"
+# USER = "python"
+# PWD = "python"
+# DATABASE = "glpi"
 
 def get_id(phone,mydb):
 
@@ -18,16 +22,8 @@ def get_id(phone,mydb):
     extract = "title{0}firstname{0}lastname{0}displayname{0}society{0}phone{0}email{0}id\n".format(s)
     
     mycursor = mydb.cursor()
-    mycursor.execute("SELECT firstname,realname,glpi_users.name,phone, phone2, mobile, glpi_users.entities_id, glpi_entities.name FROM glpi_users LEFT JOIN glpi_entities ON glpi_users.entities_id = glpi_entities.id WHERE phone LIKE '%{}';".format(phone))
+    mycursor.execute("SELECT firstname, realname, glpi_users.name, phone, phone2, mobile, glpi_users.entities_id, glpi_entities.name FROM glpi_users LEFT JOIN glpi_entities ON glpi_users.entities_id = glpi_entities.id WHERE phone LIKE '%{0}' OR mobile LIKE '%{0}' OR phone2 LIKE '%{0}';".format(phone))    
     myresult = mycursor.fetchall()
-    
-    if len(myresult) == 0 :
-        mycursor.execute("SELECT firstname,realname,glpi_users.name,phone, phone2, mobile, glpi_users.entities_id, glpi_entities.name FROM glpi_users LEFT JOIN glpi_entities ON glpi_users.entities_id = glpi_entities.id WHERE mobile LIKE '%{}';".format(phone))
-        myresult = mycursor.fetchall()
-
-        if len(myresult) == 0 :
-            mycursor.execute("SELECT firstname,realname,glpi_users.name,phone, phone2, mobile, glpi_users.entities_id, glpi_entities.name FROM glpi_users LEFT JOIN glpi_entities ON glpi_users.entities_id = glpi_entities.id WHERE phone2 LIKE '%{}';".format(phone))
-            myresult = mycursor.fetchall()
 
     try:
         if myresult[0][3]:
@@ -43,8 +39,9 @@ def get_id(phone,mydb):
             print("Téléphone non renseigné")
     
         extract += "mr{0}{1}{0}{2}{0}{3}{0}{6}{0}0033{4}{0}default@mail.fr{0}{5}\n".format(s,myresult[0][0],myresult[0][1],myresult[0][2],tel,str(myresult[0][6]),myresult[0][7])
+    
     except IndexError as err:
-        print("Numéro inconnu et l'erreur:\n ",err)
+        print("Numéro inconnu, Erreur:\n ",err)
 
     mycursor.close()
     return extract      
@@ -55,20 +52,9 @@ def get_name(search,mydb):
     extract = "title{0}firstname{0}lastname{0}displayname{0}society{0}phone{0}email{0}id\n".format(s)
 
     mycursor = mydb.cursor()
-    mycursor.execute("SELECT firstname,realname,glpi_users.name,phone, phone2, mobile, glpi_users.entities_id, glpi_entities.name FROM glpi_users LEFT JOIN glpi_entities ON glpi_users.entities_id = glpi_entities.id WHERE firstname LIKE '%{}';".format(search))
-    
+    mycursor.execute("SELECT firstname,realname,glpi_users.name,phone, phone2, mobile, glpi_users.entities_id, glpi_entities.name FROM glpi_users LEFT JOIN glpi_entities ON glpi_users.entities_id = glpi_entities.id WHERE firstname LIKE '{0}%' OR realname LIKE '{0}%' OR glpi_users.name LIKE '{0}%';".format(search))
     myresult = mycursor.fetchall()
     
-    if len(myresult) == 0 :
-        mycursor.execute("SELECT firstname,realname,glpi_users.name,phone, phone2, mobile, glpi_users.entities_id, glpi_entities.name FROM glpi_users LEFT JOIN glpi_entities ON glpi_users.entities_id = glpi_entities.id WHERE realname LIKE '%{}';".format(search))
-        
-        myresult = mycursor.fetchall()
-
-        if len(myresult) == 0 :
-            mycursor.execute("SELECT firstname,realname,glpi_users.name,phone, phone2, mobile, glpi_users.entities_id, glpi_entities.name FROM glpi_users LEFT JOIN glpi_entities ON glpi_users.entities_id = glpi_entities.id WHERE name LIKE '%{}';".format(search))
-            
-            myresult = mycursor.fetchall()
-
     try:
         if myresult[0][3]:
             tel = myresult[0][3]
@@ -100,7 +86,7 @@ def api_glpi_all():
    
 
 @app.route('/api/ws-phonebook', methods=['GET'])
-def api_glpi_annuaire():
+def request_glpi():
     try :
         mydb = mysql.connector.connect(
         host=HOST,
