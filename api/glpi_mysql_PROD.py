@@ -35,8 +35,8 @@ def get_id(phone,mydb):
     
         extract += "mr{0}{1}{0}{2}{0}{3}{0}{6}{0}0033{4}{0}default@mail.fr{0}{5}\n".format(s,myresult[0][0],myresult[0][1],myresult[0][2],tel,str(myresult[0][6]),myresult[0][7])
     
-    except IndexError as err:
-        print("Numéro inconnu, Erreur:\n ",err)
+    except :
+        return "Numéro inconnue"
 
     mycursor.close()
     return extract      
@@ -49,32 +49,36 @@ def get_name(search,mydb):
     mycursor = mydb.cursor()
     mycursor.execute("SELECT firstname,realname,glpi_users.name,phone, phone2, mobile, glpi_users.entities_id, glpi_entities.name FROM glpi_users LEFT JOIN glpi_entities ON glpi_users.entities_id = glpi_entities.id WHERE firstname LIKE '{0}%' OR realname LIKE '{0}%' OR glpi_users.name LIKE '{0}%';".format(search))
     myresult = mycursor.fetchall()
+
+    print(myresult)
     
     try:
-        if myresult[0][3]:
-            tel = myresult[0][3]
-            tel = tel[-9:]
-        elif myresult[0][4] != '':
-            tel = myresult[0][4]
-            tel = tel[-9:]
-        elif myresult[0][5] != '':
-            tel = myresult[0][5]
-            tel = tel[-9:]
+        if len(myresult) == 1:
+            iteration = [0]
         else:
-            print("Téléphone non renseigné")
+            iteration = range(len(myresult))
+        for i in iteration:
+            if myresult[i][3]:
+                tel = myresult[i][3]
+                tel = tel[-9:]
+            elif myresult[i][4] != '':
+                tel = myresult[i][4]
+                tel = tel[-9:]
+            elif myresult[i][5] != '':
+                tel = myresult[i][5]
+                tel = tel[-9:]
+            else:
+                print("Téléphone non renseigné")
 
-        extract += "mr{0}{1}{0}{2}{0}{3}{0}{6}{0}0033{4}{0}default@mail.fr{0}{5}\n".format(s,myresult[0][0],myresult[0][1],myresult[0][2],tel,str(myresult[0][6]),myresult[0][7])
+            extract += "mr{0}{1}{0}{2}{0}{3}{0}{6}{0}0033{4}{0}default@mail.fr{0}{5}\n".format(s,myresult[i][0],myresult[i][1],myresult[i][2],tel,str(myresult[i][6]),myresult[i][7])
     
-    except IndexError as err:
-        return ("Personne Inconnue: \n error : ",err )
     except :
-        print("Erreur Search")
+        return "Personne inconnue"
 
     mycursor.close()
     return extract
 
 # ROUTE
-
 @app.route('/api/ws-phonebook', methods=['GET'])
 def request_glpi():
     try :
@@ -102,6 +106,6 @@ def request_glpi():
             return "pas d'arguments passés"
 
     except :
-        print("Echec de connexion à la base de données.")
+        print("Echec de la connexion à la base de données.")
 
 app.run(host="0.0.0.0")
