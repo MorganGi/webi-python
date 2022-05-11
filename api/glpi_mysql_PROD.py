@@ -11,11 +11,6 @@ PWD = "superpass"
 DATABASE = "dbglpi"
 TABLE_USERS = "glpi_users"
 
-# HOST = "192.168.18.192"
-# USER = "python"
-# PWD = "python"
-# DATABASE = "glpi"
-
 def get_id(phone,mydb):
 
     s = "|"
