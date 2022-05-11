@@ -78,12 +78,7 @@ def get_name(search,mydb):
     mycursor.close()
     return extract
 
-# ROUTES
-
-@app.route('/api/ws-phonebook/all', methods=['GET'])
-def api_glpi_all():
-    return "all"
-   
+# ROUTE
 
 @app.route('/api/ws-phonebook', methods=['GET'])
 def request_glpi():
