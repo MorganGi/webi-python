@@ -30,14 +30,12 @@ def get_id(phone,prefix,mydb):
     mycursor.execute("SELECT firstname, realname, glpi_users.name, phone, phone2, mobile, glpi_users.entities_id, glpi_entities.name FROM glpi_users LEFT JOIN glpi_entities ON glpi_users.entities_id = glpi_entities.id WHERE REPLACE(REPLACE(REPLACE(phone, ' ', ''), '.', ''), '-', '') LIKE '%{0}' OR REPLACE(REPLACE(REPLACE(mobile, ' ', ''), '.', ''), '-', '') LIKE '%{0}' OR REPLACE(REPLACE(REPLACE(mobile, ' ', ''), '.', ''), '-', '') LIKE '%{0}';".format(phone))   
     # SELECT firstname, realname, glpi_users.name, phone, phone2, mobile, glpi_users.entities_id, glpi_entities.name FROM glpi_users LEFT JOIN glpi_entities ON glpi_users.entities_id = glpi_entities.id WHERE REPLACE(REPLACE(REPLACE(phone, ' ', ''), '.', ''), '-', '') LIKE '%{0}' OR REPLACE(REPLACE(REPLACE(mobile, ' ', ''), '.', ''), '-', '') LIKE '%{0}' OR REPLACE(REPLACE(REPLACE(mobile, ' ', ''), '.', ''), '-', '') LIKE '%{0}'; 
     myresult = mycursor.fetchall()
-    app.logger.info("DEBUG RESULT: ")
 
     try:
         extract += "mr{0}{1}{0}{2}{0}{3}{0}{6}{0}{7}{4}{0}default@mail.fr{0}{5}\n".format(s,myresult[0][0],myresult[0][1],myresult[0][2],phone,str(myresult[0][6]),myresult[0][7],prefix)
     except :
         return "Numéro inconnu"
 
-    app.logger.info("DEBUG GETID EXTRACT: ")
     mycursor.close()
     return extract      
     
@@ -49,7 +47,6 @@ def get_name(search,mydb):
     mycursor = mydb.cursor()
     mycursor.execute("SELECT firstname,realname,glpi_users.name,phone, phone2, mobile, glpi_users.entities_id, glpi_entities.name FROM glpi_users LEFT JOIN glpi_entities ON glpi_users.entities_id = glpi_entities.id WHERE firstname LIKE '{0}%' OR realname LIKE '{0}%' OR glpi_users.name LIKE '{0}%';".format(search))
     myresult = mycursor.fetchall()
-    app.logger.info("DEBUG PHONE: ", myresult)
     try:
         if len(myresult) == 1:
             iteration = [0]
@@ -80,7 +77,6 @@ def get_name(search,mydb):
 
 @app.route('/api/ws-phonebook', methods=['GET'])
 def request_glpi():
-    app.logger.info("DEBUG ARRIVE 1")
     try :
         mydb = mysql.connector.connect(
         host=HOST,
@@ -90,19 +86,13 @@ def request_glpi():
         )
 
         
-        app.logger.info("DEBUG PARAMETRES")
 
         if 'phone' in flask.request.args and flask.request.args['phone'] != "unknown" :
             phone = str(flask.request.args['phone'])
-            app.logger.info("DEBUG PHONE2: ")
             prefix = phone[:-9]
-            app.logger.info("DEBUG PREFIX: ")
             phone = phone[-9:] # On garde les 9 derniers digits
-            app.logger.info("DEBUG PHONE 9 digit: ")
             extract = get_id(phone,prefix,mydb)
-            app.logger.info("DEBUG EXTRACT AVANT RETURN: ")
             mydb.close()
-            app.logger.info("DEBUG DB CLOSED")
             # return extract
 
         elif 'search' in flask.request.args:
@@ -115,7 +105,7 @@ def request_glpi():
             return "pas d'arguments passés"
 
     except :
-        return app.logger.info("DEBUG CONNEXION BD ECHOUE")
+        return "Connexion base de données échouée"
     
     return extract
 
