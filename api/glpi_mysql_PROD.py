@@ -27,7 +27,7 @@ def get_id(phone,prefix,mydb):
 
     mycursor = mydb.cursor()
     #SELECT firstname, realname, glpi_users.name, phone, phone2, mobile, glpi_users.entities_id, glpi_entities.name FROM glpi_users LEFT JOIN glpi_entities ON glpi_users.entities_id = glpi_entities.id WHERE phone LIKE '%{0}' OR mobile LIKE '%{0}' OR phone2 LIKE '%{0}';"
-    mycursor.execute("SELECT firstname, realname, glpi_users.name, phone, phone2, mobile, glpi_users.entities_id, glpi_entities.name FROM glpi_users LEFT JOIN glpi_entities ON glpi_users.entities_id = glpi_entities.id WHERE REPLACE(REPLACE(REPLACE(phone, ' ', ''), '.', ''), '-', '') LIKE '%{0}' OR REPLACE(REPLACE(REPLACE(mobile, ' ', ''), '.', ''), '-', '') LIKE '%{0}' OR REPLACE(REPLACE(REPLACE(mobile, ' ', ''), '.', ''), '-', '') LIKE '%{0}';".format(phone))   
+    mycursor.execute("SELECT firstname, realname, glpi_users.name, phone, phone2, mobile, glpi_users.entities_id, glpi_entities.name FROM glpi_users LEFT JOIN glpi_entities ON glpi_users.entities_id = glpi_entities.id WHERE REPLACE(REPLACE(REPLACE(phone, ' ', ''), '.', ''), '-', '') LIKE '%{0}' OR REPLACE(REPLACE(REPLACE(mobile, ' ', ''), '.', ''), '-', '') LIKE '%{0}' OR REPLACE(REPLACE(REPLACE(phone2, ' ', ''), '.', ''), '-', '') LIKE '%{0}';".format(phone))   
     # SELECT firstname, realname, glpi_users.name, phone, phone2, mobile, glpi_users.entities_id, glpi_entities.name FROM glpi_users LEFT JOIN glpi_entities ON glpi_users.entities_id = glpi_entities.id WHERE REPLACE(REPLACE(REPLACE(phone, ' ', ''), '.', ''), '-', '') LIKE '%{0}' OR REPLACE(REPLACE(REPLACE(mobile, ' ', ''), '.', ''), '-', '') LIKE '%{0}' OR REPLACE(REPLACE(REPLACE(mobile, ' ', ''), '.', ''), '-', '') LIKE '%{0}'; 
     myresult = mycursor.fetchall()
 
