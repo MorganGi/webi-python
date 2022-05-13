@@ -20,7 +20,7 @@ TABLE_USERS = "glpi_users"
 
 
 def get_id(phone,prefix,mydb):
-    app.logger.info("DEBUG GETID: ")
+    
     s = "|"
     extract = "title{0}firstname{0}lastname{0}displayname{0}society{0}phone{0}email{0}id\n".format(s)
     
