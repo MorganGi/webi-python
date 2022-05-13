@@ -2,6 +2,7 @@ import flask
 from flask import Flask
 import mysql.connector
 
+
 app = flask.Flask(__name__)
 app.config["DEBUG"] = True
 
@@ -17,15 +18,17 @@ def get_id(phone,prefix,mydb):
     s = "|"
     extract = "title{0}firstname{0}lastname{0}displayname{0}society{0}phone{0}email{0}id\n".format(s)
     
-    mycursor = mydb.cursor()
-    #SELECT firstname, realname, glpi_users.name, phone, phone2, mobile, glpi_users.entities_id, glpi_entities.name FROM glpi_users LEFT JOIN glpi_entities ON glpi_users.entities_id = glpi_entities.id WHERE phone LIKE '%{0}' OR mobile LIKE '%{0}' OR phone2 LIKE '%{0}';"
-    mycursor.execute("SELECT firstname, realname, glpi_users.name, phone, phone2, mobile, glpi_users.entities_id, glpi_entities.name FROM glpi_users LEFT JOIN glpi_entities ON glpi_users.entities_id = glpi_entities.id WHERE REPLACE(REPLACE(REPLACE(phone, ' ', ''), '.', ''), '-', '') LIKE '%{0}' OR REPLACE(REPLACE(REPLACE(mobile, ' ', ''), '.', ''), '-', '') LIKE '%{0}' OR REPLACE(REPLACE(REPLACE(mobile, ' ', ''), '.', ''), '-', '') LIKE '%{0}';".format(phone))    
-    myresult = mycursor.fetchall()
 
+    mycursor = mydb.cursor()
+    #                 SELECT firstname, realname, glpi_users.name, phone, phone2, mobile, glpi_users.entities_id, glpi_entities.name FROM glpi_users LEFT JOIN glpi_entities ON glpi_users.entities_id = glpi_entities.id WHERE phone LIKE '%{0}' OR mobile LIKE '%{0}' OR phone2 LIKE '%{0}';"
+    mycursor.execute("SELECT firstname, realname, glpi_users.name, phone, phone2, mobile, glpi_users.entities_id, glpi_entities.name FROM glpi_users LEFT JOIN glpi_entities ON glpi_users.entities_id = glpi_entities.id WHERE REPLACE(REPLACE(REPLACE(phone, ' ', ''), '.', ''), '-', '') LIKE '%{0}' OR REPLACE(REPLACE(REPLACE(mobile, ' ', ''), '.', ''), '-', '') LIKE '%{0}' OR REPLACE(REPLACE(REPLACE(mobile, ' ', ''), '.', ''), '-', '') LIKE '%{0}';".format(phone))   
+    # SELECT firstname, realname, glpi_users.name, phone, phone2, mobile, glpi_users.entities_id, glpi_entities.name FROM glpi_users LEFT JOIN glpi_entities ON glpi_users.entities_id = glpi_entities.id WHERE REPLACE(REPLACE(REPLACE(phone, ' ', ''), '.', ''), '-', '') LIKE '%{0}' OR REPLACE(REPLACE(REPLACE(mobile, ' ', ''), '.', ''), '-', '') LIKE '%{0}' OR REPLACE(REPLACE(REPLACE(mobile, ' ', ''), '.', ''), '-', '') LIKE '%{0}'; 
+    myresult = mycursor.fetchall()
+    print(myresult)
     try:
         extract += "mr{0}{1}{0}{2}{0}{3}{0}{6}{0}{7}{4}{0}default@mail.fr{0}{5}\n".format(s,myresult[0][0],myresult[0][1],myresult[0][2],phone,str(myresult[0][6]),myresult[0][7],prefix)
     except :
-        return "Numéro inconnue"
+        return "Numéro inconnu"
 
     mycursor.close()
     return extract      
@@ -66,8 +69,10 @@ def get_name(search,mydb):
     return extract
 
 # ROUTE
+
 @app.route('/api/ws-phonebook', methods=['GET'])
 def request_glpi():
+    print("DEBUG ARRIVE")
     try :
         mydb = mysql.connector.connect(
         host=HOST,
@@ -76,8 +81,12 @@ def request_glpi():
         database= DATABASE
         )
 
+        print("DEBUG connected to MARIADB")
+
         if 'phone' in flask.request.args and flask.request.args['phone'] != "unknown" :
+            print("DEBUG PHONE")
             phone = str(flask.request.args['phone'])
+            print("DEBUG PHONE", phone)
             prefix = phone[:-9]
             phone = phone[-9:] # On garde les 9 derniers digits
             extract = get_id(phone,prefix,mydb)
