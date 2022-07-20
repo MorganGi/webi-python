@@ -20,19 +20,29 @@ TABLE_USERS = "glpi_users"
 
 
 def get_id(phone,prefix,mydb):
-    
     s = "|"
-    extract = "title{0}firstname{0}lastname{0}displayname{0}society{0}phone{0}email{0}id\n".format(s)
+    extract = "title{0}firstname{0}lastname{0}displayname{0}society{0}phone{0}email{0}id{0}grade\n".format(s)
     
-
     mycursor = mydb.cursor()
     #SELECT firstname, realname, glpi_users.name, phone, phone2, mobile, glpi_users.entities_id, glpi_entities.name FROM glpi_users LEFT JOIN glpi_entities ON glpi_users.entities_id = glpi_entities.id WHERE phone LIKE '%{0}' OR mobile LIKE '%{0}' OR phone2 LIKE '%{0}';"
-    mycursor.execute("SELECT firstname, realname, glpi_users.name, phone, phone2, mobile, glpi_users.entities_id, glpi_entities.name FROM glpi_users LEFT JOIN glpi_entities ON glpi_users.entities_id = glpi_entities.id WHERE REPLACE(REPLACE(REPLACE(phone, ' ', ''), '.', ''), '-', '') LIKE '%{0}' OR REPLACE(REPLACE(REPLACE(mobile, ' ', ''), '.', ''), '-', '') LIKE '%{0}' OR REPLACE(REPLACE(REPLACE(phone2, ' ', ''), '.', ''), '-', '') LIKE '%{0}';".format(phone))   
-    # SELECT firstname, realname, glpi_users.name, phone, phone2, mobile, glpi_users.entities_id, glpi_entities.name FROM glpi_users LEFT JOIN glpi_entities ON glpi_users.entities_id = glpi_entities.id WHERE REPLACE(REPLACE(REPLACE(phone, ' ', ''), '.', ''), '-', '') LIKE '%{0}' OR REPLACE(REPLACE(REPLACE(mobile, ' ', ''), '.', ''), '-', '') LIKE '%{0}' OR REPLACE(REPLACE(REPLACE(mobile, ' ', ''), '.', ''), '-', '') LIKE '%{0}'; 
+    mycursor.execute("SELECT firstname, realname, glpi_users.name, phone, phone2, mobile, glpi_users.entities_id, glpi_entities.name, glpi_users.profiles_id FROM glpi_users LEFT JOIN glpi_entities ON glpi_users.entities_id = glpi_entities.id WHERE REPLACE(REPLACE(REPLACE(phone, ' ', ''), '.', ''), '-', '') LIKE '%{0}' OR REPLACE(REPLACE(REPLACE(mobile, ' ', ''), '.', ''), '-', '') LIKE '%{0}' OR REPLACE(REPLACE(REPLACE(phone2, ' ', ''), '.', ''), '-', '') LIKE '%{0}';".format(phone))   
     myresult = mycursor.fetchall()
 
+   
+    if (myresult[0][8] != 0):
+
+        mycursor.execute("SELECT name FROM glpi_profiles WHERE id = {0};".format(myresult[0][8]))
+        myresult2 = mycursor.fetchall()
+        if (myresult2[0][0] == "VIP"):
+            grade = myresult2[0][0]
+        else:
+            grade = ""
+    else:
+        grade = ""
+  
     try:
-        extract += "mr{0}{1}{0}{2}{0}{3}{0}{6}{0}{7}{4}{0}default@mail.fr{0}{5}\n".format(s,myresult[0][0],myresult[0][1],myresult[0][2],phone,str(myresult[0][6]),myresult[0][7],prefix)
+        extract += "mr{0}{1}{0}{2}{0}{3}{0}{6}{0}{7}{4}{0}default@mail.fr{0}{5}{0}{8}\n".format(s,myresult[0][0],myresult[0][1],myresult[0][2],phone,str(myresult[0][6]),myresult[0][7],prefix, grade)
+
     except :
         return "Numéro inconnu"
 
@@ -74,7 +84,7 @@ def get_name(search,mydb):
     return extract
 
 # ROUTE
-
+# URL : http://localhost:5000/api/ws-phonebook?phone=NUM
 @app.route('/api/ws-phonebook', methods=['GET'])
 def request_glpi():
     try :
@@ -84,9 +94,7 @@ def request_glpi():
         password=PWD,
         database= DATABASE
         )
-
         
-
         if 'phone' in flask.request.args and flask.request.args['phone'] != "unknown" :
             phone = str(flask.request.args['phone'])
             prefix = phone[:-9]
